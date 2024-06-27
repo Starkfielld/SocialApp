@@ -1,12 +1,32 @@
-import React from 'react';
-import { StyleSheet, View, TextInput, Text, TouchableOpacity } from 'react-native';
+import React, { useState } from 'react';
+import { StyleSheet, View, TextInput, Text, TouchableOpacity, ActivityIndicator } from 'react-native';
 import LoginButton from '../Interface/components/buttons/LoginButton';
 import GoogleButton from '../Interface/components/buttons/GoogleButton';
 import GitHubButton from '../Interface/components/buttons/GitHubButton';
 import LinkedinButton from '../Interface/components/buttons/LinkedinButton';
 import { MaterialIcons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import api from '../api';
 
 export default function Login({ navigation }) {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleLogin = async () => {
+    setLoading(true);
+    try {
+      const response = await api.post('/users/login', { email, password });
+      await AsyncStorage.setItem('token', response.data.token);
+      navigation.navigate('Feed');
+    } catch (err) {
+      setError('Email ou senha inválidos');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <View style={styles.container}>
       <View style={styles.login}>
@@ -16,13 +36,20 @@ export default function Login({ navigation }) {
           <TextInput
             placeholder='Email'
             style={styles.input}
+            value={email}
+            onChangeText={setEmail}
           />
           <TextInput
             placeholder='Senha'
             style={styles.input}
             secureTextEntry={true}
+            value={password}
+            onChangeText={setPassword}
           />
-          <LoginButton value='Login' onPress={() => navigation.navigate('Feed')} />
+          {error ? <Text style={styles.error}>{error}</Text> : null}
+          {loading ? <ActivityIndicator size="large" color="#0000ff" /> : (
+            <LoginButton value='Login' onPress={handleLogin} />
+          )}
         </View>
         <View style={styles.separate} />
         <View style={styles.socialLogin}>
@@ -34,7 +61,7 @@ export default function Login({ navigation }) {
           </View>
         </View>
         <TouchableOpacity onPress={() => navigation.navigate('Signup')}>
-          <Text style={styles.signupText}>Não tem conta ? Cadastre-se Aqui</Text>
+          <Text style={styles.signupText}>Não tem conta? Cadastre-se Aqui</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -68,6 +95,11 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: 10,
     padding: 10,
+  },
+  error: {
+    color: 'red',
+    textAlign: 'center',
+    marginBottom: 10,
   },
   separate: {
     height: 1,

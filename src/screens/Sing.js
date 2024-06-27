@@ -1,37 +1,73 @@
-import React from 'react';
-import { StyleSheet, View, TextInput, Text, TouchableOpacity } from 'react-native';
+import React, { useState } from 'react';
+import { StyleSheet, View, TextInput, Text, TouchableOpacity, ActivityIndicator } from 'react-native';
 import LoginButton from '../Interface/components/buttons/LoginButton';
 import { MaterialIcons } from '@expo/vector-icons';
+import api from '../api';
 
 export default function Signup({ navigation }) {
+  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleSignup = async () => {
+    if (password !== confirmPassword) {
+      setError('As senhas não coincidem');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      await api.post('/users/signup', { username, email, password });
+      navigation.navigate('Login');
+    } catch (err) {
+      setError('Erro ao criar conta');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <View style={styles.container}>
-      <View style={styles.login}>
+      <View style={styles.signup}>
         <MaterialIcons style={styles.logo} name="device-hub" size={50} color="black" />
         <Text style={styles.textLogo}>SocialApp</Text>
-        <View style={styles.manualLogin}>
+        <View style={styles.manualSignup}>
           <TextInput
             placeholder='Nome'
             style={styles.input}
+            value={username}
+            onChangeText={setUsername}
           />
           <TextInput
             placeholder='Email'
             style={styles.input}
+            value={email}
+            onChangeText={setEmail}
           />
           <TextInput
             placeholder='Senha'
             style={styles.input}
             secureTextEntry={true}
+            value={password}
+            onChangeText={setPassword}
           />
           <TextInput
             placeholder='Confirmar Senha'
             style={styles.input}
             secureTextEntry={true}
+            value={confirmPassword}
+            onChangeText={setConfirmPassword}
           />
-          <LoginButton value='Logar' onPress={() => navigation.navigate('Feed')} />
+          {error ? <Text style={styles.error}>{error}</Text> : null}
+          {loading ? <ActivityIndicator size="large" color="#0000ff" /> : (
+            <LoginButton value='Cadastrar' onPress={handleSignup} />
+          )}
         </View>
         <TouchableOpacity onPress={() => navigation.navigate('Login')}>
-          <Text style={styles.loginText}>Já é cadastrado ? Clique Aqui</Text>
+          <Text style={styles.loginText}>Já é cadastrado? Clique aqui</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -45,7 +81,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  login: {
+  signup: {
     backgroundColor: '#fff',
     width: 300,
     height: 550,
@@ -66,20 +102,10 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     padding: 10,
   },
-  separate: {
-    height: 1,
-    margin: 10,
-    width: '80%',
-    backgroundColor: '#000',
-    alignSelf: 'center',
-  },
-  textInput: {
-    alignSelf: 'center',
-    margin: 10,
-  },
-  buttonGroup: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
+  error: {
+    color: 'red',
+    textAlign: 'center',
+    marginBottom: 10,
   },
   logo: {
     alignSelf: 'center',
